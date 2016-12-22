@@ -2,7 +2,7 @@
 # VERSION CHANGES
 #
 
-LOCATION=/usr/local
+DESTDIR=/usr/local
 CFLAGS=-Wall -g -I. -O2 
 LIBS=-lsqlite3
 
@@ -21,7 +21,7 @@ imessage2txt: ${OFILES} imessage2txt.c
 	${CC} ${CFLAGS} $(COMPONENTS) imessage2txt.c ${OFILES} -o imessage2txt ${LIBS}
 
 install: ${OBJ}
-	cp imessage2txt ${LOCATION}/bin/
+	cp imessage2txt ${DESTDIR}/bin/
 
 clean:
 	rm -f *.o *core ${OBJ}
