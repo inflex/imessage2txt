@@ -18,8 +18,36 @@
 #include <string.h>
 #include <sqlite3.h>
 
-char *g_input_file;
+char help[]="-i <sms.db> [-h] [-o]\n\
+\t-i <sms.db> : specify the input database file\n\
+\t-o : Obfusicate the output\n\
+\t-h : this help\n\
+";
 
+struct globals {
+	char *input_file;
+	int obfusicate;
+} glb;
+
+/*-----------------------------------------------------------------\
+  Date Code:	: 20161221-091524
+  Function Name	: int
+  Returns Type	: static
+  	----Parameter List
+	1. callback( void *NotUsed, 
+	2.  int argc, 
+	3.  char **argv, 
+	4.  char **azColName , 
+	------------------
+Exit Codes	: 
+Side Effects	: 
+--------------------------------------------------------------------
+Comments:
+
+--------------------------------------------------------------------
+Changes:
+
+\------------------------------------------------------------------*/
 static int callback( void *NotUsed, int argc, char **argv, char **azColName ) {
 
 	char *n="", *datecode, *handle_id, *is_from_me, *message_text;
@@ -30,7 +58,7 @@ static int callback( void *NotUsed, int argc, char **argv, char **azColName ) {
 	message_text = argv[3]?argv[3]:n;
 
 	/* deliberate obfusication of output */
-	/*
+	if (glb.obfusicate) {
 	if (strlen(handle_id) > 7) handle_id[6] = '\0';
 
 	{
@@ -44,7 +72,7 @@ static int callback( void *NotUsed, int argc, char **argv, char **azColName ) {
 			p++; if (*p == '\0') break;
 		}
 	}
-	*/
+	}
 	/* end of debugging / custom  output */
 
 
@@ -59,18 +87,45 @@ static int callback( void *NotUsed, int argc, char **argv, char **azColName ) {
 
 }
 
-int parse_parameters( int argc, char **argv ) {
+/*-----------------------------------------------------------------\
+  Date Code:	: 20161221-091521
+  Function Name	: parse_parameters
+  Returns Type	: int
+  	----Parameter List
+	1. struct globals *g, 
+	2.  int argc, 
+	3.  char **argv , 
+	------------------
+Exit Codes	: 
+Side Effects	: 
+--------------------------------------------------------------------
+Comments:
+
+--------------------------------------------------------------------
+Changes:
+
+\------------------------------------------------------------------*/
+int parse_parameters( struct globals *g, int argc, char **argv ) {
 	int i;
 
 	for (i=0; i < argc; i++) {
 
 		if (argv[i][0] == '-') {
 			switch (argv[i][1]) {
+				case 'h':
+					fprintf(stdout,"%s %s", argv[0], help);
+					exit(1);
+					break;
+
+				case 'o':
+					g->obfusicate = 1;
+					break;
+
 				case 'i':
 					/* set the input file*/
 					i++;
 					if (i < argc) {
-						g_input_file = argv[i];
+						g->input_file = argv[i];
 					} else {
 						fprintf(stderr,"Insuffient parameters\n");
 						exit(1);
@@ -87,20 +142,38 @@ int parse_parameters( int argc, char **argv ) {
 }
 
 
+/*-----------------------------------------------------------------\
+  Date Code:	: 20161221-091518
+  Function Name	: main
+  Returns Type	: int
+  	----Parameter List
+	1. int argc, 
+	2.  char **argv , 
+	------------------
+Exit Codes	: 
+Side Effects	: 
+--------------------------------------------------------------------
+Comments:
+
+--------------------------------------------------------------------
+Changes:
+
+\------------------------------------------------------------------*/
 int main( int argc, char **argv ) {
+	struct globals *g = &glb;
 	sqlite3 *db;
 	char sql[1024];
 	char *zErrMsg = 0;
 	int rc;
 
-	parse_parameters( argc, argv );
+	parse_parameters( g, argc, argv );
 
 	/*
 	 * If the input file is non-null, try open...
 	 */
-	if (g_input_file) {
+	if (g->input_file) {
 
-		rc = sqlite3_open( g_input_file, &db );
+		rc = sqlite3_open( g->input_file, &db );
 
 		if ( rc ) {
 			fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
